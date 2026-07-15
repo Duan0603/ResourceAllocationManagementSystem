@@ -1,0 +1,347 @@
+{
+	"info": {
+		"_postman_id": "8b58498d-a44d-44a7-8f55-1f951e7fb534",
+		"name": "Resource Allocation System APIs",
+		"description": "Postman Collection for Resource Allocation System",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "System Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/health",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"health"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Employees",
+			"item": [
+				{
+					"name": "Get All Employees",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/employees",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"employees"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Employee by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/employees/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"employees",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Employee",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"employeeCode\": \"EMP001\",\n  \"fullName\": \"Tuan Ho Anh\",\n  \"email\": \"tuanha@company.com\",\n  \"role\": \"Senior Developer\",\n  \"department\": \"FSOFT-Q1\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/employees",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"employees"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Employee Workload",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/employees/1/workload",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"employees",
+								"1",
+								"workload"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Projects",
+			"item": [
+				{
+					"name": "Get All Projects",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/projects",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"projects"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Project",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"projectCode\": \"NCG\",\n  \"projectName\": \"Next Gen Core\",\n  \"customer\": \"FPT Software\",\n  \"status\": \"ACTIVE\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/projects",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"projects"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Allocations",
+			"item": [
+				{
+					"name": "Get All Allocations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/allocations",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"allocations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Allocation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"employeeId\": 1,\n  \"projectId\": 1,\n  \"allocationPercent\": 60,\n  \"roleInProject\": \"Backend Developer\",\n  \"startDate\": \"2026-07-15\",\n  \"endDate\": \"2026-10-15\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/allocations",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"allocations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Allocation",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"employeeId\": 1,\n  \"projectId\": 1,\n  \"allocationPercent\": 100,\n  \"roleInProject\": \"Lead Developer\",\n  \"startDate\": \"2026-07-15\",\n  \"endDate\": \"2026-10-15\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/allocations/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"allocations",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Allocation",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/allocations/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"allocations",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "AI Features",
+			"item": [
+				{
+					"name": "AI Recommendation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"Tìm Java Developer còn tối thiểu 50% available.\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/ai/recommend",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"ai",
+								"recommend"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "AI Risk Detection",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"Sprint tới cần thêm 2 Java Developer.\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/ai/risk-detect",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"ai",
+								"risk-detect"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResourceAlloc - Resource Allocation Management System</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0b0f19;
+            --bg-secondary: #151c2c;
+            --bg-tertiary: #1f293d;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #1d4ed8;
+            --accent-success: #10b981;
+            --accent-warning: #f59e0b;
+            --accent-error: #ef4444;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --glass-bg: rgba(21, 28, 44, 0.65);
+            --glass-blur: blur(12px);
+            --transition-speed: 0.3s;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styling */
+        aside {
+            width: 260px;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .logo-text {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #ffffff, #93c5fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            font-weight: 500;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            color: var(--text-primary);
+            background-color: var(--bg-tertiary);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(to right, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.03));
+            border-left: 3px solid var(--accent-primary);
+        }
+
+        .nav-item svg {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+        }
+
+        /* Main Content Styling */
+        main {
+            margin-left: 260px;
+            flex: 1;
+            padding: 40px;
+            max-width: 1400px;
+            width: calc(100% - 260px);
+        }
+
+        /* Top Bar */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--accent-error);
+        }
+
+        .status-dot.online {
+            background-color: var(--accent-success);
+            box-shadow: 0 0 8px var(--accent-success);
+        }
+
+        /* Tabs container */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Grid cards dashboard */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+        }
+
+        /* Forms Styling */
+        .content-layout {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 32px;
+            align-items: start;
+        }
+
+        .card-panel {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border var(--transition-speed);
+            width: 100%;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent-primary);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity var(--transition-speed);
+            margin-top: 8px;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-danger {
+            background: var(--accent-error);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background-color: rgba(255, 255, 255, 0.03);
+            color: var(--text-secondary);
+            padding: 16px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: rgba(255, 255, 255, 0.01);
+        }
+
+        /* Status Pills */
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-planning {
+            background-color: rgba(107, 114, 128, 0.15);
+            color: #d1d5db;
+        }
+
+        .badge-active {
+            background-color: rgba(59, 130, 246, 0.15);
+            color: #93c5fd;
+        }
+
+        .badge-completed {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: #a7f3d0;
+        }
+
+        .badge-danger {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+        }
+
+        /* Progress bars */
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 4px;
+            background-color: var(--accent-primary);
+        }
+
+        .progress-bar.success { background-color: var(--accent-success); }
+        .progress-bar.warning { background-color: var(--accent-warning); }
+        .progress-bar.danger { background-color: var(--accent-error); }
+
+        /* Report layouts */
+        .reports-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .report-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .report-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .report-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .report-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* AI Prompt Cards */
+        .ai-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .prompt-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+        }
+
+        .prompt-card:hover {
+            border-color: var(--accent-primary);
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+
+        .prompt-title {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .prompt-text {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .result-container {
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 0.85rem;
+            color: #a7f3d0;
+            min-height: 120px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .result-item-card {
+            background-color: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: inherit;
+        }
+
+        .result-item-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .action-cell {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color var(--transition-speed);
+        }
+
+        .action-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .action-btn.delete:hover {
+            color: var(--accent-error);
+        }
+
+        /* Notifications toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background-color: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-primary);
+            border-radius: 4px;
+            padding: 16px 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            gap: 12px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success { border-left-color: var(--accent-success); }
+        .toast.error { border-left-color: var(--accent-error); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Navigation -->
+    <aside>
+        <div class="logo-container">
+            <div class="logo-icon">R</div>
+            <div class="logo-text">ResourceAlloc</div>
+        </div>
+        <ul class="nav-links">
+            <li>
+                <a class="nav-item active" onclick="switchTab('dashboard')">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    Dashboard & Reports
+                </a>
+            </li>
+            <li>
+                <a class="nav-item" onclick="switchTab('employees')">
+                    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    Employees
+                </a>
+            </li>
+            <li>
+                <a class="nav-item" onclick="switchTab('projects')">
+                    <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                    Projects
+                </a>
+            </li>
+            <li>
+                <a class="nav-item" onclick="switchTab('allocations')">
+                    <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>
+                    Allocations
+                </a>
+            </li>
+            <li>
+                <a class="nav-item" onclick="switchTab('ai')">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M12 2v9"></path><path d="M8 5h8"></path></svg>
+                    AI Assistant
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main Container -->
+    <main>
+        <!-- Top Header -->
+        <header>
+            <h1 class="page-title" id="page-title-label">Dashboard & Reports</h1>
+            <div class="system-status">
+                <div class="status-badge">
+                    <div class="status-dot" id="db-status-dot"></div>
+                    <span id="db-status-text">Database Checking</span>
+                </div>
+                <div class="status-badge">
+                    <span>User: <strong>Hoang</strong></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- 1. DASHBOARD TAB -->
+        <div id="tab-dashboard" class="tab-content active">
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-label">Total Employees</span>
+                    <span class="stat-value" id="stat-total-employees">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Active Projects</span>
+                    <span class="stat-value" id="stat-active-projects">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Avg Workload</span>
+                    <span class="stat-value" id="stat-avg-workload">0%</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Overloaded Staff (&gt;90%)</span>
+                    <span class="stat-value" id="stat-overloaded-employees">0</span>
+                </div>
+            </div>
+
+            <!-- Reports Section -->
+            <h2 class="panel-title" style="margin-bottom: 20px; font-size: 1.3rem;">Real-time Resource Reports</h2>
+            <div class="reports-grid">
+                <!-- Utilization Report -->
+                <div class="report-card">
+                    <h3 class="panel-title" style="border-bottom:none; margin-bottom: 0;">Employee Utilization Report</h3>
+                    <div id="report-utilization-list" style="display: flex; flex-direction: column; gap: 16px;">
+                        <!-- JS Loaded -->
+                    </div>
+                </div>
+
+                <!-- Available Resource Report -->
+                <div class="report-card">
+                    <h3 class="panel-title" style="border-bottom:none; margin-bottom: 0;">Available Resources (&lt;100%)</h3>
+                    <div id="report-available-list" style="display: flex; flex-direction: column; gap: 16px;">
+                        <!-- JS Loaded -->
+                    </div>
+                </div>
+
+                <!-- Overloaded Employee Report -->
+                <div class="report-card">
+                    <h3 class="panel-title" style="border-bottom:none; margin-bottom: 0; color: var(--accent-error);">Overloaded Employees (&gt;90%)</h3>
+                    <div id="report-overload-list" style="display: flex; flex-direction: column; gap: 16px;">
+                        <!-- JS Loaded -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. EMPLOYEES TAB -->
+        <div id="tab-employees" class="tab-content">
+            <div class="content-layout">
+                <!-- Left form panel -->
+                <div class="card-panel">
+                    <h2 class="panel-title" id="employee-form-title">Add New Employee</h2>
+                    <form id="employee-form" onsubmit="saveEmployee(event)">
+                        <input type="hidden" id="emp-id">
+                        <div class="form-group">
+                            <label>Employee Code</label>
+                            <input type="text" id="emp-code" placeholder="e.g., EMP001" required maxlength="20">
+                        </div>
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="emp-name" placeholder="e.g., Tuan Ho Anh" required maxlength="100">
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" id="emp-email" placeholder="e.g., tuanha@company.com" required maxlength="100">
+                        </div>
+                        <div class="form-group">
+                            <label>Role</label>
+                            <input type="text" id="emp-role" placeholder="e.g., Senior Developer" maxlength="50">
+                        </div>
+                        <div class="form-group">
+                            <label>Department</label>
+                            <input type="text" id="emp-dept" placeholder="e.g., FSOFT-Q1" maxlength="50">
+                        </div>
+                        <div class="btn-group">
+                            <button type="submit" class="btn" style="flex: 1;" id="btn-save-employee">Register Employee</button>
+                            <button type="button" class="btn btn-secondary" id="btn-cancel-emp-edit" style="display:none;" onclick="cancelEmployeeEdit()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Right Table list panel -->
+                <div class="card-panel">
+                    <h2 class="panel-title">Employee Directory</h2>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Department</th>
+                                    <th>Workload</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="employees-table-body">
+                                <!-- JS Loaded -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. PROJECTS TAB -->
+        <div id="tab-projects" class="tab-content">
+            <div class="content-layout">
+                <!-- Left Form Panel -->
+                <div class="card-panel">
+                    <h2 class="panel-title" id="project-form-title">Create New Project</h2>
+                    <form id="project-form" onsubmit="saveProject(event)">
+                        <input type="hidden" id="proj-id">
+                        <div class="form-group">
+                            <label>Project Code</label>
+                            <input type="text" id="proj-code" placeholder="e.g., NCG" required maxlength="20">
+                        </div>
+                        <div class="form-group">
+                            <label>Project Name</label>
+                            <input type="text" id="proj-name" placeholder="e.g., Next Gen Core" required maxlength="200">
+                        </div>
+                        <div class="form-group">
+                            <label>Customer Name</label>
+                            <input type="text" id="proj-cust" placeholder="e.g., Customer ABC" required maxlength="100">
+                        </div>
+                        <div class="form-group">
+                            <label>Project Status</label>
+                            <select id="proj-status">
+                                <option value="PLANNING">PLANNING</option>
+                                <option value="ACTIVE" selected>ACTIVE</option>
+                                <option value="COMPLETED">COMPLETED</option>
+                            </select>
+                        </div>
+                        <div class="btn-group">
+                            <button type="submit" class="btn" style="flex: 1;" id="btn-save-project">Register Project</button>
+                            <button type="button" class="btn btn-secondary" id="btn-cancel-proj-edit" style="display:none;" onclick="cancelProjectEdit()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Right Table list panel -->
+                <div class="card-panel">
+                    <h2 class="panel-title">Project List</h2>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Project Name</th>
+                                    <th>Customer</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="projects-table-body">
+                                <!-- JS Loaded -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. ALLOCATIONS TAB -->
+        <div id="tab-allocations" class="tab-content">
+            <div class="content-layout">
+                <!-- Left Form Panel -->
+                <div class="card-panel">
+                    <h2 class="panel-title" id="allocation-form-title">Allocate Resource</h2>
+                    <form id="allocation-form" onsubmit="saveAllocation(event)">
+                        <input type="hidden" id="alloc-id">
+                        <div class="form-group">
+                            <label>Employee</label>
+                            <select id="alloc-emp-id" required>
+                                <option value="" disabled selected>Select Employee</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Project</label>
+                            <select id="alloc-proj-id" required>
+                                <option value="" disabled selected>Select Project</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Allocation Percentage: <strong id="alloc-percent-label">50%</strong></label>
+                            <input type="range" id="alloc-percent" min="1" max="100" value="50" oninput="document.getElementById('alloc-percent-label').innerText = this.value + '%'">
+                        </div>
+                        <div class="form-group">
+                            <label>Role in Project</label>
+                            <input type="text" id="alloc-role" placeholder="e.g., Backend Developer" maxlength="100">
+                        </div>
+                        <div class="form-group">
+                            <label>Start Date</label>
+                            <input type="date" id="alloc-start" required>
+                        </div>
+                        <div class="form-group">
+                            <label>End Date</label>
+                            <input type="date" id="alloc-end" required>
+                        </div>
+                        <div class="btn-group">
+                            <button type="submit" class="btn" style="flex: 1;">Save Allocation</button>
+                            <button type="button" class="btn btn-secondary" id="btn-cancel-edit" style="display:none;" onclick="cancelAllocationEdit()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Right Table List Panel -->
+                <div class="card-panel">
+                    <h2 class="panel-title">Active Allocations</h2>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Project</th>
+                                    <th>Allocation</th>
+                                    <th>Role In Project</th>
+                                    <th>Period</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allocations-table-body">
+                                <!-- JS Loaded -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. AI ASSISTANT TAB -->
+        <div id="tab-ai" class="tab-content">
+            <h2 class="panel-title" style="font-size: 1.3rem;">AI resource manager tool</h2>
+            
+            <div class="ai-grid">
+                <div class="prompt-card" onclick="runAiPrompt('Tìm Java Developer còn tối thiểu 50% available.', 'recommend')">
+                    <div class="prompt-title">Recommendation Prompt</div>
+                    <div class="prompt-text">"Tìm Java Developer còn tối thiểu 50% available."</div>
+                </div>
+                <div class="prompt-card" onclick="runAiPrompt('Sprint tới cần thêm 2 Java Developer.', 'risk-detect')">
+                    <div class="prompt-title">Risk Detection Prompt</div>
+                    <div class="prompt-text">"Sprint tới cần thêm 2 Java Developer."</div>
+                </div>
+            </div>
+
+            <div class="card-panel" style="margin-bottom: 24px;">
+                <div class="form-group">
+                    <label>Ask AI Assistant (Enter search keyword, role, and capacity constraint):</label>
+                    <input type="text" id="ai-input-text" placeholder="e.g., Tìm Java Developer còn tối thiểu 50% available" value="Tìm Java Developer còn tối thiểu 50% available.">
+                </div>
+                <div class="btn-group">
+                    <button class="btn" onclick="triggerAI('recommend')">AI Recommendation</button>
+                    <button class="btn btn-secondary" onclick="triggerAI('risk-detect')">AI Risk Detection</button>
+                </div>
+            </div>
+
+            <div class="card-panel">
+                <h3 class="panel-title" style="border-bottom: none; margin-bottom: 12px;">AI response output</h3>
+                <div class="result-container" id="ai-result-output">
+                    Results will appear here...
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Notification Toast -->
+    <div class="toast" id="toast">
+        <span id="toast-message">Message</span>
+    </div>
+
+    <!-- Page Logic Script -->
+    <script>
+        // Global variables
+        let employees = [];
+        let projects = [];
+        let allocations = [];
+
+        // Tab Switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabId).classList.add('active');
+            
+            // Set nav link active
+            const clickedLink = Array.from(document.querySelectorAll('.nav-item')).find(el => el.onclick.toString().includes(tabId));
+            if (clickedLink) clickedLink.classList.add('active');
+
+            // Set Header label
+            const titleMap = {
+                'dashboard': 'Dashboard & Reports',
+                'employees': 'Employee Management',
+                'projects': 'Project Management',
+                'allocations': 'Resource Allocation',
+                'ai': 'AI Resource Assistant'
+            };
+            document.getElementById('page-title-label').innerText = titleMap[tabId] || 'Dashboard';
+            
+            // Load fresh data
+            loadAllData();
+        }
+
+        // Notification Toast triggers
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.className = 'toast ' + type;
+            document.getElementById('toast-message').innerText = message;
+            toast.style.display = 'flex';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 4000);
+        }
+
+        // Live Health Check Polling
+        function checkSystemHealth() {
+            fetch('/api/health')
+                .then(res => res.json())
+                .then(data => {
+                    const dot = document.getElementById('db-status-dot');
+                    const text = document.getElementById('db-status-text');
+                    if (data.status === 'UP') {
+                        dot.className = 'status-dot online';
+                        text.innerText = 'Database Connected';
+                    } else {
+                        dot.className = 'status-dot';
+                        text.innerText = 'DB Error: ' + (data.error || 'Connection Failed');
+                    }
+                })
+                .catch(err => {
+                    const dot = document.getElementById('db-status-dot');
+                    const text = document.getElementById('db-status-text');
+                    dot.className = 'status-dot';
+                    text.innerText = 'Offline / Connection Failed';
+                });
+        }
+
+        // Fetch API Helpers
+        function fetchEmployees() {
+            return fetch('/employees').then(res => res.json()).then(data => employees = data);
+        }
+
+        function fetchProjects() {
+            return fetch('/projects').then(res => res.json()).then(data => projects = data);
+        }
+
+        function fetchAllocations() {
+            return fetch('/allocations').then(res => res.json()).then(data => allocations = data);
+        }
+
+        // Aggregate reports and stats
+        function updateDashboardAndReports() {
+            // Stats
+            document.getElementById('stat-total-employees').innerText = employees.length;
+            
+            const activeProjectsCount = projects.filter(p => p.status === 'ACTIVE').length;
+            document.getElementById('stat-active-projects').innerText = activeProjectsCount;
+
+            // Compute Workloads
+            const utilizationList = document.getElementById('report-utilization-list');
+            const availableList = document.getElementById('report-available-list');
+            const overloadList = document.getElementById('report-overload-list');
+
+            utilizationList.innerHTML = '';
+            availableList.innerHTML = '';
+            overloadList.innerHTML = '';
+
+            let sumWorkloads = 0;
+            let overloadedCount = 0;
+
+            if (employees.length === 0) {
+                utilizationList.innerHTML = '<span style="color:var(--text-muted)">No employee data.</span>';
+                availableList.innerHTML = '<span style="color:var(--text-muted)">No employee data.</span>';
+                overloadList.innerHTML = '<span style="color:var(--text-muted)">No overloaded employee.</span>';
+                return;
+            }
+
+            // Calculate workload map per employee
+            const workloadMap = {};
+            employees.forEach(emp => {
+                workloadMap[emp.employeeId] = 0;
+            });
+            allocations.forEach(alloc => {
+                if (workloadMap[alloc.employeeId] !== undefined) {
+                    workloadMap[alloc.employeeId] += alloc.allocationPercent;
+                }
+            });
+
+            employees.forEach(emp => {
+                const totalAllocated = workloadMap[emp.employeeId];
+                sumWorkloads += totalAllocated;
+                
+                // Color mapping
+                let progressClass = 'success';
+                if (totalAllocated > 90) {
+                    progressClass = 'danger';
+                    overloadedCount++;
+                } else if (totalAllocated > 75) {
+                    progressClass = 'warning';
+                }
+
+                // 1. Utilization list
+                utilizationList.innerHTML += `
+                    <div class="report-item">
+                        <div class="report-header-row">
+                            <strong>${emp.fullName}</strong>
+                            <span>${totalAllocated}%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar ${progressClass}" style="width: ${totalAllocated}%"></div>
+                        </div>
+                    </div>
+                `;
+
+                // 2. Available List
+                if (totalAllocated < 100) {
+                    availableList.innerHTML += `
+                        <div class="report-item">
+                            <div class="report-header-row">
+                                <strong>${emp.fullName} (${emp.role || 'Unspecified'})</strong>
+                                <span class="badge badge-completed">${100 - totalAllocated}% free</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // 3. Overloaded List
+                if (totalAllocated > 90) {
+                    overloadList.innerHTML += `
+                        <div class="report-item">
+                            <div class="report-header-row">
+                                <strong style="color:var(--accent-error)">${emp.fullName}</strong>
+                                <span class="badge badge-danger">${totalAllocated}% Capacity</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            const avgWorkload = Math.round(sumWorkloads / employees.length);
+            document.getElementById('stat-avg-workload').innerText = avgWorkload + '%';
+            document.getElementById('stat-overloaded-employees').innerText = overloadedCount;
+
+            if (availableList.innerHTML === '') {
+                availableList.innerHTML = '<span style="color:var(--text-muted)">All employees are fully allocated.</span>';
+            }
+            if (overloadList.innerHTML === '') {
+                overloadList.innerHTML = '<span style="color:var(--text-muted)">No employees are overloaded (&gt;90%).</span>';
+            }
+        }
+
+        // Render Tables
+        function renderTables() {
+            // Employees Table
+            const empBody = document.getElementById('employees-table-body');
+            empBody.innerHTML = '';
+            
+            // Calculate workload map for table rendering
+            const workloadMap = {};
+            employees.forEach(emp => workloadMap[emp.employeeId] = 0);
+            allocations.forEach(alloc => {
+                if (workloadMap[alloc.employeeId] !== undefined) {
+                    workloadMap[alloc.employeeId] += alloc.allocationPercent;
+                }
+            });
+
+            employees.forEach(emp => {
+                const percent = workloadMap[emp.employeeId];
+                let badgeClass = 'badge-completed';
+                if (percent > 90) badgeClass = 'badge-danger';
+                else if (percent > 75) badgeClass = 'badge-planning';
+
+                empBody.innerHTML += `
+                    <tr>
+                        <td><strong>${emp.employeeCode}</strong></td>
+                        <td>${emp.fullName}</td>
+                        <td>${emp.email}</td>
+                        <td>${emp.role || '-'}</td>
+                        <td>${emp.department || '-'}</td>
+                        <td><span class="badge ${badgeClass}">${percent}%</span></td>
+                        <td class="action-cell">
+                            <button class="action-btn" onclick="editEmployee(${emp.employeeId})">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </button>
+                            <button class="action-btn delete" onclick="deleteEmployee(${emp.employeeId})">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // Projects Table
+            const projBody = document.getElementById('projects-table-body');
+            projBody.innerHTML = '';
+            projects.forEach(proj => {
+                let badge = 'badge-planning';
+                if (proj.status === 'ACTIVE') badge = 'badge-active';
+                if (proj.status === 'COMPLETED') badge = 'badge-completed';
+
+                projBody.innerHTML += `
+                    <tr>
+                        <td><strong>${proj.projectCode}</strong></td>
+                        <td>${proj.projectName}</td>
+                        <td>${proj.customer}</td>
+                        <td><span class="badge ${badge}">${proj.status}</span></td>
+                        <td class="action-cell">
+                            <button class="action-btn" onclick="editProject(${proj.projectId})">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </button>
+                            <button class="action-btn delete" onclick="deleteProject(${proj.projectId})">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // Allocations Table
+            const allocBody = document.getElementById('allocations-table-body');
+            allocBody.innerHTML = '';
+            allocations.forEach(alloc => {
+                allocBody.innerHTML += `
+                    <tr>
+                        <td><strong>${alloc.employeeName}</strong><br><small style="color:var(--text-secondary)">${alloc.employeeCode}</small></td>
+                        <td><strong>${alloc.projectName}</strong><br><small style="color:var(--text-secondary)">${alloc.projectCode}</small></td>
+                        <td><span class="badge badge-active" style="font-size:0.85rem">${alloc.allocationPercent}%</span></td>
+                        <td>${alloc.roleInProject || '-'}</td>
+                        <td><small>${alloc.startDate} to ${alloc.endDate}</small></td>
+                        <td class="action-cell">
+                            <button class="action-btn" onclick="editAllocation(${alloc.allocationId})">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </button>
+                            <button class="action-btn delete" onclick="deleteAllocation(${alloc.allocationId})">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // Update Dropdowns in allocations form
+            const empSelect = document.getElementById('alloc-emp-id');
+            const projSelect = document.getElementById('alloc-proj-id');
+            
+            // Save selected index
+            const prevEmp = empSelect.value;
+            const prevProj = projSelect.value;
+
+            empSelect.innerHTML = '<option value="" disabled selected>Select Employee</option>';
+            projSelect.innerHTML = '<option value="" disabled selected>Select Project</option>';
+
+            employees.forEach(emp => {
+                empSelect.innerHTML += `<option value="${emp.employeeId}">${emp.fullName} (${emp.employeeCode})</option>`;
+            });
+
+            projects.forEach(proj => {
+                // completed projects are excluded from allocation selection dynamically for ease of use
+                const disabled = proj.status === 'COMPLETED' ? 'disabled style="color:var(--text-muted)"' : '';
+                projSelect.innerHTML += `<option value="${proj.projectId}" ${disabled}>${proj.projectName} (${proj.projectCode}) [${proj.status}]</option>`;
+            });
+
+            // restore selection
+            if (prevEmp) empSelect.value = prevEmp;
+            if (prevProj) projSelect.value = prevProj;
+        }
+
+        // Form save logic
+        function saveEmployee(event) {
+            event.preventDefault();
+            const id = document.getElementById('emp-id').value;
+            const payload = {
+                employeeCode: document.getElementById('emp-code').value,
+                fullName: document.getElementById('emp-name').value,
+                email: document.getElementById('emp-email').value,
+                role: document.getElementById('emp-role').value,
+                department: document.getElementById('emp-dept').value
+            };
+
+            const url = id ? `/employees/${id}` : '/employees';
+            const method = id ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => {
+                if (!res.ok) return res.json().then(err => { throw err; });
+                return res.json();
+            })
+            .then(data => {
+                showToast(id ? `Employee ${data.fullName} updated successfully!` : `Employee ${data.fullName} registered successfully!`);
+                cancelEmployeeEdit();
+                loadAllData();
+            })
+            .catch(err => {
+                showToast(err.message || 'Validation failed. Check your input values.', 'error');
+            });
+        }
+
+        function editEmployee(id) {
+            const emp = employees.find(e => e.employeeId === id);
+            if (!emp) return;
+
+            document.getElementById('emp-id').value = emp.employeeId;
+            document.getElementById('emp-code').value = emp.employeeCode;
+            document.getElementById('emp-name').value = emp.fullName;
+            document.getElementById('emp-email').value = emp.email;
+            document.getElementById('emp-role').value = emp.role || '';
+            document.getElementById('emp-dept').value = emp.department || '';
+
+            document.getElementById('employee-form-title').innerText = 'Edit Employee';
+            document.getElementById('btn-save-employee').innerText = 'Save Changes';
+            document.getElementById('btn-cancel-emp-edit').style.display = 'inline-block';
+        }
+
+        function cancelEmployeeEdit() {
+            document.getElementById('employee-form').reset();
+            document.getElementById('emp-id').value = '';
+            document.getElementById('employee-form-title').innerText = 'Add New Employee';
+            document.getElementById('btn-save-employee').innerText = 'Register Employee';
+            document.getElementById('btn-cancel-emp-edit').style.display = 'none';
+        }
+
+        function deleteEmployee(id) {
+            if (!confirm('Are you sure you want to delete this employee? This will also remove all their active allocations.')) return;
+            fetch(`/employees/${id}`, { method: 'DELETE' })
+                .then(res => {
+                    if (res.ok) {
+                        showToast('Employee deleted successfully!');
+                        loadAllData();
+                    } else {
+                        showToast('Failed to delete employee.', 'error');
+                    }
+                });
+        }
+
+        function saveProject(event) {
+            event.preventDefault();
+            const id = document.getElementById('proj-id').value;
+            const payload = {
+                projectCode: document.getElementById('proj-code').value,
+                projectName: document.getElementById('proj-name').value,
+                customer: document.getElementById('proj-cust').value,
+                status: document.getElementById('proj-status').value
+            };
+
+            const url = id ? `/projects/${id}` : '/projects';
+            const method = id ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => {
+                if (!res.ok) return res.json().then(err => { throw err; });
+                return res.json();
+            })
+            .then(data => {
+                showToast(id ? `Project ${data.projectName} updated successfully!` : `Project ${data.projectName} created successfully!`);
+                cancelProjectEdit();
+                loadAllData();
+            })
+            .catch(err => {
+                showToast(err.message || 'Validation failed.', 'error');
+            });
+        }
+
+        function editProject(id) {
+            const proj = projects.find(p => p.projectId === id);
+            if (!proj) return;
+
+            document.getElementById('proj-id').value = proj.projectId;
+            document.getElementById('proj-code').value = proj.projectCode;
+            document.getElementById('proj-name').value = proj.projectName;
+            document.getElementById('proj-cust').value = proj.customer;
+            document.getElementById('proj-status').value = proj.status;
+
+            document.getElementById('project-form-title').innerText = 'Edit Project';
+            document.getElementById('btn-save-project').innerText = 'Save Changes';
+            document.getElementById('btn-cancel-proj-edit').style.display = 'inline-block';
+        }
+
+        function cancelProjectEdit() {
+            document.getElementById('project-form').reset();
+            document.getElementById('proj-id').value = '';
+            document.getElementById('project-form-title').innerText = 'Create New Project';
+            document.getElementById('btn-save-project').innerText = 'Register Project';
+            document.getElementById('btn-cancel-proj-edit').style.display = 'none';
+        }
+
+        function deleteProject(id) {
+            if (!confirm('Are you sure you want to delete this project? This will also remove all its allocations.')) return;
+            fetch(`/projects/${id}`, { method: 'DELETE' })
+                .then(res => {
+                    if (res.ok) {
+                        showToast('Project deleted successfully!');
+                        loadAllData();
+                    } else {
+                        showToast('Failed to delete project.', 'error');
+                    }
+                });
+        }
+
+        function saveAllocation(event) {
+            event.preventDefault();
+            const id = document.getElementById('alloc-id').value;
+            const payload = {
+                employeeId: parseInt(document.getElementById('alloc-emp-id').value),
+                projectId: parseInt(document.getElementById('alloc-proj-id').value),
+                allocationPercent: parseInt(document.getElementById('alloc-percent').value),
+                roleInProject: document.getElementById('alloc-role').value,
+                startDate: document.getElementById('alloc-start').value,
+                endDate: document.getElementById('alloc-end').value
+            };
+
+            const url = id ? `/allocations/${id}` : '/allocations';
+            const method = id ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => {
+                if (!res.ok) return res.json().then(err => { throw err; });
+                return res.json();
+            })
+            .then(data => {
+                showToast(id ? 'Allocation updated!' : 'Allocation created!');
+                cancelAllocationEdit();
+                loadAllData();
+            })
+            .catch(err => {
+                showToast(err.message || 'Failed to save allocation.', 'error');
+            });
+        }
+
+        function deleteAllocation(id) {
+            if (!confirm('Are you sure you want to remove this resource allocation?')) return;
+            fetch(`/allocations/${id}`, { method: 'DELETE' })
+                .then(res => {
+                    if (res.ok) {
+                        showToast('Allocation removed successfully!');
+                        loadAllData();
+                    } else {
+                        showToast('Failed to remove allocation.', 'error');
+                    }
+                });
+        }
+
+        function editAllocation(id) {
+            const alloc = allocations.find(a => a.allocationId === id);
+            if (!alloc) return;
+
+            document.getElementById('alloc-id').value = alloc.allocationId;
+            document.getElementById('alloc-emp-id').value = alloc.employeeId;
+            document.getElementById('alloc-proj-id').value = alloc.projectId;
+            document.getElementById('alloc-percent').value = alloc.allocationPercent;
+            document.getElementById('alloc-percent-label').innerText = alloc.allocationPercent + '%';
+            document.getElementById('alloc-role').value = alloc.roleInProject || '';
+            document.getElementById('alloc-start').value = alloc.startDate;
+            document.getElementById('alloc-end').value = alloc.endDate;
+
+            document.getElementById('allocation-form-title').innerText = 'Edit Allocation';
+            document.getElementById('btn-cancel-edit').style.display = 'inline-block';
+        }
+
+        function cancelAllocationEdit() {
+            document.getElementById('allocation-form').reset();
+            document.getElementById('alloc-id').value = '';
+            document.getElementById('alloc-percent-label').innerText = '50%';
+            document.getElementById('allocation-form-title').innerText = 'Allocate Resource';
+            document.getElementById('btn-cancel-edit').style.display = 'none';
+        }
+
+        // AI Assistant triggering
+        function runAiPrompt(text, mode) {
+            document.getElementById('ai-input-text').value = text;
+            triggerAI(mode);
+        }
+
+        function triggerAI(mode) {
+            const query = document.getElementById('ai-input-text').value;
+            const output = document.getElementById('ai-result-output');
+            
+            output.innerHTML = 'AI Thinking... Please wait...';
+            output.style.color = '#9ca3af';
+
+            const url = mode === 'recommend' ? '/api/ai/recommend' : '/api/ai/risk-detect';
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: query })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (mode === 'recommend') {
+                    const list = data.recommendedResources;
+                    if (!list || list.length === 0) {
+                        output.innerHTML = 'No resources match this recommendation search.';
+                        return;
+                    }
+                    output.innerHTML = '';
+                    list.forEach(item => {
+                        output.innerHTML += `
+                            <div class="result-item-card">
+                                <div>
+                                    <strong style="color:white; font-size: 0.95rem;">${item.employee}</strong><br>
+                                    <small style="color:var(--text-secondary)">Role: ${item.role || 'Unspecified'}</small>
+                                </div>
+                                <span class="badge badge-completed" style="font-size:0.85rem">${item.available}% Available Capacity</span>
+                            </div>
+                        `;
+                    });
+                } else {
+                    // Risk detection output text
+                    output.innerHTML = data.riskReport.replace(/\n/g, '<br>');
+                    output.style.color = '#fca5a5';
+                }
+            })
+            .catch(err => {
+                output.innerText = 'Error calling AI Engine: ' + err.message;
+                output.style.color = 'var(--accent-error)';
+            });
+        }
+
+        // Global Load Coordinator
+        function loadAllData() {
+            Promise.all([fetchEmployees(), fetchProjects(), fetchAllocations()])
+                .then(() => {
+                    renderTables();
+                    updateDashboardAndReports();
+                })
+                .catch(err => console.error("Error loading system data", err));
+        }
+
+        // Initializer
+        window.onload = function() {
+            checkSystemHealth();
+            loadAllData();
+            // Check health every 15 seconds
+            setInterval(checkSystemHealth, 15000);
+        };
+    </script>
+</body>
+</html>

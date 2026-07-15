@@ -1,0 +1,24 @@
+# Environment variables
+.env
+
+# Maven build outputs
+target/
+*.class
+
+# IDE files
+.idea/
+*.iml
+.settings/
+.project
+.classpath
+.factorypath
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Agent and BMad tools
+.agent/
+_bmad/
+_bmad-output/
+
