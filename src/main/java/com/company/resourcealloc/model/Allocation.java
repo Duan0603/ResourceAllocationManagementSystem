@@ -52,6 +52,12 @@ public class Allocation {
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
+    @Builder.Default
+    @NotNull(message = "Allocation status is required")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'PENDING'")
+    private AllocationStatus status = AllocationStatus.PENDING;
+
     @PrePersist
     @PreUpdate
     private void validateDates() {

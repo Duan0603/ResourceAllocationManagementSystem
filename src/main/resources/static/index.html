@@ -536,6 +536,92 @@
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
+
+        /* Modal Popup Styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(11, 15, 25, 0.7);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn var(--transition-speed) ease;
+        }
+
+        .modal-content {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            width: 480px;
+            max-width: 90%;
+            padding: 28px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            animation: slideUp var(--transition-speed) ease;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: color var(--transition-speed);
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .skills-tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+            padding: 12px;
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            min-height: 48px;
+        }
+
+        .skill-tag-removable {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background-color: rgba(59, 130, 246, 0.15);
+            color: #93c5fd;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .skill-tag-remove-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -685,6 +771,18 @@
                 <!-- Right Table list panel -->
                 <div class="card-panel">
                     <h2 class="panel-title">Employee Directory</h2>
+                    
+                    <!-- Search by Skill Section -->
+                    <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                        <input type="text" id="search-skill-input" placeholder="Search employees by skill (e.g. Java)" style="flex: 1;" oninput="searchBySkill()">
+                        <button class="btn btn-secondary" onclick="clearSkillSearch()" style="margin-top: 0; padding: 10px 20px;">Clear</button>
+                    </div>
+                    <!-- Search Results Area -->
+                    <div id="skill-search-results" style="display:none; margin-bottom: 20px; padding: 16px; background-color: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.15); border-radius: 8px;">
+                        <h4 style="margin-bottom: 10px; font-size: 0.95rem; color: #93c5fd;">Search Results by Skill:</h4>
+                        <div id="skill-search-results-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                    </div>
+
                     <div class="table-container">
                         <table>
                             <thead>
@@ -694,6 +792,7 @@
                                     <th>Email</th>
                                     <th>Role</th>
                                     <th>Department</th>
+                                    <th>Skills</th>
                                     <th>Workload</th>
                                     <th>Actions</th>
                                 </tr>
@@ -820,6 +919,7 @@
                                     <th>Allocation</th>
                                     <th>Role In Project</th>
                                     <th>Period</th>
+                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -870,6 +970,37 @@
     <!-- Notification Toast -->
     <div class="toast" id="toast">
         <span id="toast-message">Message</span>
+    </div>
+
+    <!-- Skills Management Modal -->
+    <div id="skills-modal" class="modal-overlay" onclick="closeSkillsModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeSkillsModal()">&times;</button>
+            <h2 class="panel-title" id="skills-modal-title" style="border-bottom: none; margin-bottom: 4px;">Manage Skills</h2>
+            <p id="skills-modal-subtitle" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">Employee: <strong id="skills-modal-emp-name" style="color: white;">-</strong></p>
+            
+            <input type="hidden" id="skills-modal-emp-id">
+            
+            <div class="form-group">
+                <label>Current Skills (Click 'x' to remove)</label>
+                <div id="skills-modal-tags" class="skills-tag-container">
+                    <!-- Skills will be rendered here -->
+                </div>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label>Add New Skill</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="skills-modal-input" placeholder="e.g. Spring Boot, Docker" style="flex: 1;" onkeydown="if(event.key === 'Enter') { event.preventDefault(); addSkillToModalList(); }">
+                    <button class="btn" onclick="addSkillToModalList()" style="margin-top:0; padding: 10px 16px;">Add</button>
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn" style="flex: 1;" onclick="saveSkillsFromModal()">Save Changes</button>
+                <button class="btn btn-secondary" style="flex: 1;" onclick="closeSkillsModal()">Cancel</button>
+            </div>
+        </div>
     </div>
 
     <!-- Page Logic Script -->
@@ -1073,6 +1204,10 @@
                 if (percent > 90) badgeClass = 'badge-danger';
                 else if (percent > 75) badgeClass = 'badge-planning';
 
+                const skillsHtml = emp.skills && emp.skills.length > 0 
+                    ? emp.skills.map(s => `<span class="badge" style="margin-right: 4px; margin-bottom: 4px; background-color: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); font-weight: 500; font-size: 0.75rem;">${s.name}</span>`).join('') 
+                    : '<span style="color:var(--text-muted)">-</span>';
+
                 empBody.innerHTML += `
                     <tr>
                         <td><strong>${emp.employeeCode}</strong></td>
@@ -1080,8 +1215,12 @@
                         <td>${emp.email}</td>
                         <td>${emp.role || '-'}</td>
                         <td>${emp.department || '-'}</td>
+                        <td><div style="display: flex; flex-wrap: wrap; max-width: 250px;">${skillsHtml}</div></td>
                         <td><span class="badge ${badgeClass}">${percent}%</span></td>
                         <td class="action-cell">
+                            <button class="action-btn" onclick="openManageSkills(${emp.employeeId})" title="Manage Skills" style="color: var(--accent-primary);">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                            </button>
                             <button class="action-btn" onclick="editEmployee(${emp.employeeId})">
                                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                             </button>
@@ -1123,6 +1262,26 @@
             const allocBody = document.getElementById('allocations-table-body');
             allocBody.innerHTML = '';
             allocations.forEach(alloc => {
+                let badgeClass = 'badge-planning';
+                if (alloc.status === 'ACTIVE') badgeClass = 'badge-active';
+                else if (alloc.status === 'ENDED') badgeClass = 'badge-completed';
+
+                let actionButtons = '';
+                if (alloc.status === 'PENDING') {
+                    actionButtons += `
+                        <button class="action-btn" onclick="activateAllocation(${alloc.allocationId})" title="Activate Allocation" style="color:var(--accent-success); margin-right: 4px;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </button>
+                    `;
+                }
+                if (alloc.status === 'PENDING' || alloc.status === 'ACTIVE') {
+                    actionButtons += `
+                        <button class="action-btn" onclick="endAllocation(${alloc.allocationId})" title="End Allocation" style="color:var(--accent-warning); margin-right: 4px;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                        </button>
+                    `;
+                }
+
                 allocBody.innerHTML += `
                     <tr>
                         <td><strong>${alloc.employeeName}</strong><br><small style="color:var(--text-secondary)">${alloc.employeeCode}</small></td>
@@ -1130,11 +1289,13 @@
                         <td><span class="badge badge-active" style="font-size:0.85rem">${alloc.allocationPercent}%</span></td>
                         <td>${alloc.roleInProject || '-'}</td>
                         <td><small>${alloc.startDate} to ${alloc.endDate}</small></td>
+                        <td><span class="badge ${badgeClass}">${alloc.status}</span></td>
                         <td class="action-cell">
-                            <button class="action-btn" onclick="editAllocation(${alloc.allocationId})">
+                            ${actionButtons}
+                            <button class="action-btn" onclick="editAllocation(${alloc.allocationId})" title="Edit">
                                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                             </button>
-                            <button class="action-btn delete" onclick="deleteAllocation(${alloc.allocationId})">
+                            <button class="action-btn delete" onclick="deleteAllocation(${alloc.allocationId})" title="Delete">
                                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                             </button>
                         </td>
@@ -1377,6 +1538,141 @@
             document.getElementById('alloc-percent-label').innerText = '50%';
             document.getElementById('allocation-form-title').innerText = 'Allocate Resource';
             document.getElementById('btn-cancel-edit').style.display = 'none';
+        }
+
+        let modalSkillsList = [];
+
+        function openManageSkills(id) {
+            const emp = employees.find(e => e.employeeId === id);
+            if (!emp) return;
+            
+            document.getElementById('skills-modal-emp-id').value = emp.employeeId;
+            document.getElementById('skills-modal-emp-name').innerText = emp.fullName;
+            document.getElementById('skills-modal-input').value = '';
+            
+            modalSkillsList = emp.skills ? emp.skills.map(s => s.name) : [];
+            renderModalSkills();
+            
+            document.getElementById('skills-modal').style.display = 'flex';
+        }
+
+        function closeSkillsModal(event) {
+            if (event && event.target !== document.getElementById('skills-modal')) return;
+            document.getElementById('skills-modal').style.display = 'none';
+        }
+
+        function renderModalSkills() {
+            const container = document.getElementById('skills-modal-tags');
+            container.innerHTML = '';
+            if (modalSkillsList.length === 0) {
+                container.innerHTML = '<span style="color:var(--text-muted); font-size: 0.85rem; padding: 4px;">No skills added yet.</span>';
+                return;
+            }
+            modalSkillsList.forEach((skill, index) => {
+                container.innerHTML += `
+                    <span class="skill-tag-removable">
+                        ${skill}
+                        <button class="skill-tag-remove-btn" onclick="removeSkillFromModalList(${index})">&times;</button>
+                    </span>
+                `;
+            });
+        }
+
+        function addSkillToModalList() {
+            const input = document.getElementById('skills-modal-input');
+            const val = input.value.trim();
+            if (!val) return;
+            
+            const parts = val.split(',').map(s => s.trim()).filter(s => s.length > 0);
+            parts.forEach(p => {
+                if (!modalSkillsList.some(s => s.toLowerCase() === p.toLowerCase())) {
+                    modalSkillsList.push(p);
+                }
+            });
+            
+            input.value = '';
+            renderModalSkills();
+        }
+
+        function removeSkillFromModalList(index) {
+            modalSkillsList.splice(index, 1);
+            renderModalSkills();
+        }
+
+        function saveSkillsFromModal() {
+            const id = document.getElementById('skills-modal-emp-id').value;
+            fetch(`/employees/${id}/skills`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(modalSkillsList)
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to update skills');
+                showToast(`Skills updated successfully!`);
+                closeSkillsModal();
+                loadAllData();
+            })
+            .catch(err => showToast(err.message, 'error'));
+        }
+
+        function searchBySkill() {
+            const skill = document.getElementById('search-skill-input').value.trim();
+            if (!skill) {
+                clearSkillSearch();
+                return;
+            }
+            fetch(`/employees/search?skill=${encodeURIComponent(skill)}`)
+                .then(res => res.json())
+                .then(data => {
+                    const resultsPanel = document.getElementById('skill-search-results');
+                    const resultsList = document.getElementById('skill-search-results-list');
+                    resultsList.innerHTML = '';
+                    if (data.length === 0) {
+                        resultsList.innerHTML = '<span style="color:var(--text-secondary)">No employees found with skill: ' + skill + '</span>';
+                    } else {
+                        data.forEach(item => {
+                            resultsList.innerHTML += `
+                                <div class="result-item-card" style="margin-bottom: 0;">
+                                    <strong>${item.employeeName}</strong>
+                                    <span class="badge badge-completed">${item.available}% available capacity</span>
+                                </div>
+                            `;
+                        });
+                    }
+                    resultsPanel.style.display = 'block';
+                })
+                .catch(err => showToast('Search failed: ' + err.message, 'error'));
+        }
+
+        function clearSkillSearch() {
+            document.getElementById('search-skill-input').value = '';
+            document.getElementById('skill-search-results').style.display = 'none';
+        }
+
+        function activateAllocation(id) {
+            fetch(`/allocations/${id}/activate`, { method: 'PUT' })
+                .then(res => {
+                    if (!res.ok) return res.json().then(err => { throw err; });
+                    return res.json();
+                })
+                .then(data => {
+                    showToast('Allocation activated successfully!');
+                    loadAllData();
+                })
+                .catch(err => showToast(err.message || 'Failed to activate.', 'error'));
+        }
+
+        function endAllocation(id) {
+            fetch(`/allocations/${id}/end`, { method: 'PUT' })
+                .then(res => {
+                    if (!res.ok) return res.json().then(err => { throw err; });
+                    return res.json();
+                })
+                .then(data => {
+                    showToast('Allocation ended successfully!');
+                    loadAllData();
+                })
+                .catch(err => showToast(err.message || 'Failed to end.', 'error'));
         }
 
         // AI Assistant triggering

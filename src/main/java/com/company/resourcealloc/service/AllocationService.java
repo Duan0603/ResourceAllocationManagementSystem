@@ -10,4 +10,6 @@ public interface AllocationService {
     AllocationResponse updateAllocation(Long id, AllocationRequest request);
     void deleteAllocation(Long id);
     List<AllocationResponse> getAllAllocations();
+    AllocationResponse activateAllocation(Long id);
+    AllocationResponse endAllocation(Long id);
 }

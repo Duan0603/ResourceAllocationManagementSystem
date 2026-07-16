@@ -40,4 +40,16 @@ public class AllocationController {
     public ResponseEntity<List<AllocationResponse>> getAllAllocations() {
         return ResponseEntity.ok(allocationService.getAllAllocations());
     }
+
+    @PutMapping("/{id}/activate")
+    public ResponseEntity<AllocationResponse> activateAllocation(@PathVariable Long id) {
+        AllocationResponse response = allocationService.activateAllocation(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{id}/end")
+    public ResponseEntity<AllocationResponse> endAllocation(@PathVariable Long id) {
+        AllocationResponse response = allocationService.endAllocation(id);
+        return ResponseEntity.ok(response);
+    }
 }

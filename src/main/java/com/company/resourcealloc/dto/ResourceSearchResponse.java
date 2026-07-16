@@ -1,8 +1,6 @@
 package com.company.resourcealloc.dto;
 
-public record EmployeeWorkloadResponse(
-    Long employeeId,
+public record ResourceSearchResponse(
     String employeeName,
-    Integer allocated,
     Integer available
 ) {}

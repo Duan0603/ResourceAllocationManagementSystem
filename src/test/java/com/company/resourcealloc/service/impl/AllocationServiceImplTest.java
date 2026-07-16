@@ -4,6 +4,7 @@ import com.company.resourcealloc.dto.AllocationRequest;
 import com.company.resourcealloc.dto.AllocationResponse;
 import com.company.resourcealloc.exception.AllocationExceededException;
 import com.company.resourcealloc.model.Allocation;
+import com.company.resourcealloc.model.AllocationStatus;
 import com.company.resourcealloc.model.Employee;
 import com.company.resourcealloc.model.Project;
 import com.company.resourcealloc.model.ProjectStatus;
@@ -131,6 +132,7 @@ class AllocationServiceImplTest {
         // Existing allocation is 50%
         Allocation existingAlloc = Allocation.builder()
                 .allocationPercent(50)
+                .status(AllocationStatus.PENDING)
                 .build();
         when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
         when(projectRepository.findById(2L)).thenReturn(Optional.of(activeProject));
@@ -143,5 +145,70 @@ class AllocationServiceImplTest {
                 .hasMessageContaining("Employee allocation exceeds 100%");
 
         verify(allocationRepository, never()).save(any());
+    }
+
+    @Test
+    void givenPendingAllocation_whenActivateAllocation_thenSucceed() {
+        // Arrange
+        Allocation pendingAlloc = Allocation.builder()
+                .allocationId(10L)
+                .employee(employee)
+                .project(activeProject)
+                .allocationPercent(50)
+                .status(AllocationStatus.PENDING)
+                .startDate(LocalDate.now())
+                .endDate(LocalDate.now().plusMonths(1))
+                .build();
+        when(allocationRepository.findById(10L)).thenReturn(Optional.of(pendingAlloc));
+        when(allocationRepository.save(any(Allocation.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        AllocationResponse response = allocationService.activateAllocation(10L);
+
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response.status()).isEqualTo(AllocationStatus.ACTIVE);
+        verify(allocationRepository, times(1)).save(pendingAlloc);
+    }
+
+    @Test
+    void givenEndedAllocation_whenActivateAllocation_thenThrowIllegalArgumentException() {
+        // Arrange
+        Allocation endedAlloc = Allocation.builder()
+                .allocationId(10L)
+                .status(AllocationStatus.ENDED)
+                .build();
+        when(allocationRepository.findById(10L)).thenReturn(Optional.of(endedAlloc));
+
+        // Act & Assert
+        assertThatThrownBy(() -> allocationService.activateAllocation(10L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Ended allocation cannot be activated");
+
+        verify(allocationRepository, never()).save(any());
+    }
+
+    @Test
+    void givenActiveAllocation_whenEndAllocation_thenSucceed() {
+        // Arrange
+        Allocation activeAlloc = Allocation.builder()
+                .allocationId(10L)
+                .employee(employee)
+                .project(activeProject)
+                .allocationPercent(50)
+                .status(AllocationStatus.ACTIVE)
+                .startDate(LocalDate.now())
+                .endDate(LocalDate.now().plusMonths(1))
+                .build();
+        when(allocationRepository.findById(10L)).thenReturn(Optional.of(activeAlloc));
+        when(allocationRepository.save(any(Allocation.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        AllocationResponse response = allocationService.endAllocation(10L);
+
+        // Assert
+        assertThat(response).isNotNull();
+        assertThat(response.status()).isEqualTo(AllocationStatus.ENDED);
+        verify(allocationRepository, times(1)).save(activeAlloc);
     }
 }

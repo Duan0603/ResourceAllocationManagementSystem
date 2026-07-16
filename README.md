@@ -34,9 +34,12 @@ Hệ thống quản lý phân bổ nguồn lực (Resource Allocation Management
 ## 4. Các chức năng
 - **Quản lý Nhân viên & Dự án (CRUD):** Thêm, sửa, xóa, tìm kiếm thông tin nhân viên và các dự án (`PLANNING`, `ACTIVE`, `COMPLETED`).
 - **Quản lý Phân bổ (Allocations):** Gán nhân sự vào dự án theo tỷ lệ phần trăm (%), thời gian bắt đầu, kết thúc và vai trò.
+- **Quản lý Kỹ năng & Giao diện Popup Modal (Skills Management):** Quản lý kỹ năng nhân viên thông qua cửa sổ popup modal chuyên nghiệp, hiển thị tag kỹ năng sinh động.
+- **Tìm kiếm Nhân sự theo Kỹ năng Tức thì (Real-time contains search):** Nhập kỹ năng, danh sách nhân viên sở hữu kỹ năng tương ứng (chứa từ khóa, case-insensitive) và dung lượng khả dụng của họ sẽ tự động được lọc và hiển thị ngay khi gõ.
+- **Quy trình Trạng thái Phân bổ (Allocation Status Workflow):** Hỗ trợ trạng thái phân bổ: `PENDING`, `ACTIVE`, `ENDED` với các nút điều khiển trực tiếp trên giao diện (Kích hoạt / Kết thúc phân bổ).
 - **Ràng buộc nghiệp vụ mạnh mẽ (Business Rules):**
   - Giới hạn phân bổ mỗi dòng từ $1\%$ đến $100\%$.
-  - Quy tắc trần 100% dung lượng (Max Capacity Rule): Tổng tỷ lệ phân bổ hoạt động tại một thời điểm của nhân viên không được vượt quá $100\%$.
+  - Quy tắc trần 100% dung lượng (Max Capacity Rule): Tổng tỷ lệ phân bổ hoạt động tại một thời điểm của nhân viên (PENDING + ACTIVE) không được vượt quá $100\%$. Loại bỏ các phân bổ đã hoàn thành (`ENDED`) khỏi tính toán workload.
   - Từ chối phân bổ vào dự án đã hoàn thành (`COMPLETED`).
   - Đảm bảo logic ngày bắt đầu trước ngày kết thúc.
 - **Báo cáo Workload:** Theo dõi tỷ lệ sử dụng (Utilization) và dung lượng khả dụng (Availability) của từng nhân viên.

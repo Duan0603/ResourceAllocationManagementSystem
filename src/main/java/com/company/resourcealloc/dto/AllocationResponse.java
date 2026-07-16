@@ -1,5 +1,6 @@
 package com.company.resourcealloc.dto;
 
+import com.company.resourcealloc.model.AllocationStatus;
 import java.time.LocalDate;
 
 public record AllocationResponse(
@@ -13,5 +14,6 @@ public record AllocationResponse(
     Integer allocationPercent,
     String roleInProject,
     LocalDate startDate,
-    LocalDate endDate
+    LocalDate endDate,
+    AllocationStatus status
 ) {}

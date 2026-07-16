@@ -44,4 +44,14 @@ public class Employee {
     @Size(max = 50, message = "Department must not exceed 50 characters")
     @Column(name = "department", length = 50)
     private String department;
+
+    @Builder.Default
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "employee_skill",
+        joinColumns = @JoinColumn(name = "employee_id"),
+        inverseJoinColumns = @JoinColumn(name = "skill_id")
+    )
+    private java.util.Set<Skill> skills = new java.util.HashSet<>();
 }
+

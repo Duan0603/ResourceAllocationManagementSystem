@@ -2,7 +2,9 @@ package com.company.resourcealloc.controller;
 
 import com.company.resourcealloc.dto.EmployeeRequest;
 import com.company.resourcealloc.dto.EmployeeWorkloadResponse;
+import com.company.resourcealloc.dto.ResourceSearchResponse;
 import com.company.resourcealloc.model.Employee;
+import com.company.resourcealloc.model.Skill;
 import com.company.resourcealloc.service.EmployeeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +46,22 @@ public class EmployeeController {
     public ResponseEntity<Employee> updateEmployee(@PathVariable Long id, @Valid @RequestBody EmployeeRequest request) {
         Employee updated = employeeService.updateEmployee(id, request);
         return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping("/{id}/skills")
+    public ResponseEntity<Void> addSkillsToEmployee(@PathVariable Long id, @RequestBody List<String> skills) {
+        employeeService.addSkillsToEmployee(id, skills);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{id}/skills")
+    public ResponseEntity<List<Skill>> getEmployeeSkills(@PathVariable Long id) {
+        return ResponseEntity.ok(employeeService.getEmployeeSkills(id));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<ResourceSearchResponse>> searchEmployeesBySkill(@RequestParam String skill) {
+        return ResponseEntity.ok(employeeService.searchEmployeesBySkill(skill));
     }
 
     @DeleteMapping("/{id}")

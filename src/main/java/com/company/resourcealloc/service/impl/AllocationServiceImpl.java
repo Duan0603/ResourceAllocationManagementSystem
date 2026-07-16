@@ -58,6 +58,7 @@ public class AllocationServiceImpl implements AllocationService {
                 .roleInProject(request.roleInProject())
                 .startDate(request.startDate())
                 .endDate(request.endDate())
+                .status(com.company.resourcealloc.model.AllocationStatus.PENDING)
                 .build();
 
         Allocation saved = allocationRepository.save(allocation);
@@ -114,11 +115,43 @@ public class AllocationServiceImpl implements AllocationService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional
+    public AllocationResponse activateAllocation(Long id) {
+        log.info("Activating resource allocation id: {}", id);
+        Allocation allocation = allocationRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Allocation not found with id: " + id));
+
+        if (allocation.getStatus() == com.company.resourcealloc.model.AllocationStatus.ENDED) {
+            throw new IllegalArgumentException("Ended allocation cannot be activated");
+        }
+        if (allocation.getStatus() != com.company.resourcealloc.model.AllocationStatus.PENDING) {
+            throw new IllegalArgumentException("Only allocation with status PENDING can be activated");
+        }
+
+        allocation.setStatus(com.company.resourcealloc.model.AllocationStatus.ACTIVE);
+        Allocation saved = allocationRepository.save(allocation);
+        return mapToResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public AllocationResponse endAllocation(Long id) {
+        log.info("Ending resource allocation id: {}", id);
+        Allocation allocation = allocationRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Allocation not found with id: " + id));
+
+        allocation.setStatus(com.company.resourcealloc.model.AllocationStatus.ENDED);
+        Allocation saved = allocationRepository.save(allocation);
+        return mapToResponse(saved);
+    }
+
     private void validateTotalAllocation(Long employeeId, Long excludeAllocationId, Integer newPercent) {
         List<Allocation> existing = allocationRepository.findByEmployeeEmployeeId(employeeId);
         
         int currentTotal = existing.stream()
                 .filter(a -> excludeAllocationId == null || !Objects.equals(a.getAllocationId(), excludeAllocationId))
+                .filter(a -> a.getStatus() != com.company.resourcealloc.model.AllocationStatus.ENDED)
                 .mapToInt(Allocation::getAllocationPercent)
                 .sum();
         
@@ -139,7 +172,8 @@ public class AllocationServiceImpl implements AllocationService {
                 allocation.getAllocationPercent(),
                 allocation.getRoleInProject(),
                 allocation.getStartDate(),
-                allocation.getEndDate()
+                allocation.getEndDate(),
+                allocation.getStatus()
         );
     }
 }
